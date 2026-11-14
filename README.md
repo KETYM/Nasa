@@ -31,10 +31,12 @@ Each route uses the same reusable experience, camera, ecosystem configuration an
 
 ## Camera, model and audio
 
-The camera is requested only after the user activates it. Preview frames remain in the browser and are not recorded or uploaded.
+The camera permission is requested automatically when a landscape opens. Preview frames remain in the browser and are not recorded or uploaded; users can turn the camera off at any time.
 
 The Teachable Machine Pose export is stored locally in `public/models/earth-pose/` (`model.json`, `metadata.json`, and `weights.bin`). Its metadata labels are `Brazo derecho`, `brazo izquierdo`, and `Ambos brazos`; class-to-sound mapping uses these exact labels. The model runs in the browser with `@teachablemachine/pose` and TensorFlow.js. PoseNet is pinned to 2.2.0 because 2.2.2 pulls an incompatible TensorFlow core major. Camera frames are not recorded or uploaded. Recognition requires camera permission and a browser with WebGL or CPU TensorFlow.js support.
 
-Begin listening explicitly to enable audio. Forest gestures play the supplied birds, rain, and crickets WAV files from `public/audio/forest/`; other landscapes use configurable procedural Web Audio. Forest recordings loop while their gestures are active and fade between gestures. These are creative sound assets, not NASA recordings, measurements, or scientific sonification.
+On the landing page, the voice-selection button reads all seven landscape options and listens for a name in Spanish or English. This uses the browser's Web Speech recognition implementation, which may process speech through its own service; Earth Jukebox does not store microphone audio. After a gesture is recognized, the page announces it in Spanish.
+
+Begin listening explicitly to enable audio, as required by browser autoplay policies. Forest gestures play the supplied birds, rain, and crickets WAV files from `public/audio/forest/`; other landscapes use configurable procedural Web Audio. Forest recordings loop while their gestures are active and fade between gestures. These are creative sound assets, not NASA recordings, measurements, or scientific sonification.
 
 Photography is served by Unsplash and is not presented as NASA imagery. NASA data and visualizations have not yet been integrated.

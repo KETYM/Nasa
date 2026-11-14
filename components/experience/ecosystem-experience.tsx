@@ -3,14 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getVariant,
   type Ecosystem,
+  type MotionGesture,
 } from "@/features/ecosystems/catalog";
 import { useCamera } from "@/features/camera/use-camera";
 import { usePoseRecognition } from "@/features/pose-detection/use-pose-recognition";
 import { SonificationEngine } from "@/features/sonification/audio-engine";
+import { speakText } from "@/features/voice/browser-speech";
+import {
+  getGestureAnnouncement,
+  getLandscapeVoiceName,
+} from "@/features/voice/voice-commands";
 
 type EcosystemExperienceProps = {
   ecosystem: Ecosystem;
@@ -26,6 +32,25 @@ function getAudioErrorMessage(error: unknown): string {
   }
 
   return "Audio could not start. Check your browser audio settings and try again.";
+}
+
+function getVoiceErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return `No se pudo anunciar el movimiento por voz: ${error.message}`;
+  }
+
+  return "No se pudo anunciar el movimiento por voz.";
+}
+
+function getCameraAnnouncement(
+  status: "active" | "error",
+  landscapeName: string,
+): string {
+  if (status === "active") {
+    return `Estás en el paisaje ${landscapeName}. Cámara activa. Levanta el brazo derecho, el izquierdo o ambos y mantenlos un momento. Para escuchar los sonidos, activa una vez el botón Begin listening.`;
+  }
+
+  return "No se pudo activar la cámara. Comprueba el permiso de cámara en el navegador e inténtalo otra vez.";
 }
 
 export function EcosystemExperience({
@@ -51,7 +76,13 @@ export function EcosystemExperience({
   const [audioActive, setAudioActive] = useState(false);
   const [audioStarting, setAudioStarting] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [volume, setVolume] = useState(0.35);
+  const audioActiveRef = useRef(audioActive);
+  const currentGestureRef = useRef<MotionGesture | null>(null);
+  const playedGestureRef = useRef<MotionGesture | null>(null);
+  const announcementRequestRef = useRef(0);
+  const announcementPromiseRef = useRef<Promise<void>>(Promise.resolve());
 
   const selectedVariant = useMemo(
     () => getVariant(ecosystem, variantId),
@@ -62,20 +93,99 @@ export function EcosystemExperience({
   );
 
   useEffect(() => {
+    void startCamera();
+  }, [startCamera]);
+
+  useEffect(() => {
+    audioActiveRef.current = audioActive;
+  }, [audioActive]);
+
+  useEffect(() => {
+    if (cameraStatus !== "active" && cameraStatus !== "error") {
+      return;
+    }
+
+    void speakText(
+      getCameraAnnouncement(
+        cameraStatus,
+        getLandscapeVoiceName(ecosystem.slug),
+      ),
+    ).catch((error: unknown) =>
+      setVoiceError(getVoiceErrorMessage(error)),
+    );
+  }, [cameraStatus, ecosystem.slug]);
+
+  useEffect(() => {
     if (audioActive) {
       engine.updateVariant(selectedVariant);
     }
   }, [audioActive, engine, selectedVariant]);
 
   useEffect(() => {
-    const gestureSound =
-      audioActive && detectedGesture
-        ? ecosystem.gestures[detectedGesture]
-        : undefined;
-    void engine
-      .setGesture(audioActive ? detectedGesture : null, gestureSound)
-      .then(() => setAudioError(null))
-      .catch((error: unknown) => setAudioError(getAudioErrorMessage(error)));
+    if (!detectedGesture) {
+      currentGestureRef.current = null;
+      playedGestureRef.current = null;
+      announcementRequestRef.current += 1;
+      window.speechSynthesis?.cancel();
+      void engine.setGesture(null).catch((error: unknown) => {
+        setAudioError(getAudioErrorMessage(error));
+      });
+      return;
+    }
+
+    if (currentGestureRef.current !== detectedGesture) {
+      currentGestureRef.current = detectedGesture;
+      playedGestureRef.current = null;
+      const requestId = ++announcementRequestRef.current;
+      announcementPromiseRef.current = speakText(
+        getGestureAnnouncement(detectedGesture),
+      ).catch((error: unknown) => {
+        if (requestId === announcementRequestRef.current) {
+          setVoiceError(getVoiceErrorMessage(error));
+        }
+      });
+    }
+
+    if (!audioActive) {
+      playedGestureRef.current = null;
+      void engine.setGesture(null).catch((error: unknown) => {
+        setAudioError(getAudioErrorMessage(error));
+      });
+      return;
+    }
+
+    if (playedGestureRef.current === detectedGesture) {
+      return;
+    }
+    playedGestureRef.current = detectedGesture;
+
+    const requestId = announcementRequestRef.current;
+    void announcementPromiseRef.current
+      .then(() => {
+        if (
+          requestId !== announcementRequestRef.current ||
+          !audioActiveRef.current ||
+          currentGestureRef.current !== detectedGesture
+        ) {
+          return;
+        }
+
+        return engine.setGesture(
+          detectedGesture,
+          ecosystem.gestures[detectedGesture],
+        );
+      })
+      .then(() => {
+        if (requestId === announcementRequestRef.current) {
+          setAudioError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (requestId === announcementRequestRef.current) {
+          playedGestureRef.current = null;
+          setAudioError(getAudioErrorMessage(error));
+        }
+      });
   }, [audioActive, detectedGesture, ecosystem.gestures, engine]);
 
   useEffect(() => {
@@ -84,6 +194,7 @@ export function EcosystemExperience({
 
   useEffect(
     () => () => {
+      window.speechSynthesis?.cancel();
       void engine.stop();
     },
     [engine],
@@ -297,7 +408,7 @@ export function EcosystemExperience({
                   ? "Loading movement recognition"
                   : recognitionStatus === "ready"
                     ? detectedGesture
-                      ? `Gesture detected: ${detectedClass}`
+                      ? getGestureAnnouncement(detectedGesture)
                       : "Ready for movement"
                     : recognitionStatus === "error"
                       ? "Movement recognition unavailable"
@@ -320,6 +431,7 @@ export function EcosystemExperience({
             <p
               className="mt-3 text-xs leading-5 text-slate-300/75"
               aria-live="polite"
+              lang="es-AR"
             >
               Recognition:{" "}
               {recognitionStatus === "loading"
@@ -329,6 +441,11 @@ export function EcosystemExperience({
                   : recognitionStatus === "error"
                     ? "error"
                     : "inactive"}
+              {detectedGesture
+                ? ` — ${getGestureAnnouncement(detectedGesture)}${
+                      audioActive ? " Reproduciendo sonido." : ""
+                    }`
+                : ""}
               {detectedClass && !detectedGesture
                 ? ` — hold ${detectedClass} steady to confirm`
                 : ""}
@@ -339,6 +456,14 @@ export function EcosystemExperience({
                 className="mt-3 rounded-xl border border-rose-200/20 bg-rose-950/30 px-4 py-3 text-sm text-rose-100"
               >
                 {recognitionError}
+              </p>
+            )}
+            {voiceError && (
+              <p
+                role="alert"
+                className="mt-3 rounded-xl border border-rose-200/20 bg-rose-950/30 px-4 py-3 text-sm text-rose-100"
+              >
+                {voiceError}
               </p>
             )}
           </section>

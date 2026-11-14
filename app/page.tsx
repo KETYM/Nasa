@@ -1,6 +1,7 @@
 import { ExperiencePreview } from "@/components/landing/experience-preview";
 import { FeatureCard } from "@/components/landing/feature-card";
 import { SectionHeading } from "@/components/landing/section-heading";
+import { VoiceLandscapeSelector } from "@/components/landing/voice-landscape-selector";
 import { ecosystems } from "@/features/ecosystems/catalog";
 
 const navItems = [
@@ -137,8 +138,10 @@ export default function Home() {
             <SectionHeading
               eyebrow="One planet. Countless stories."
               title="Choose a landscape to enter."
-              description="Explore seven living landscapes through an experimental, locally generated soundscape. Each ecosystem opens its own camera and listening experience."
+              description="Explore seven living landscapes by voice or by selecting an accessible ecosystem card."
             />
+
+            <VoiceLandscapeSelector />
 
             <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {ecosystems.map((ecosystem) => (
