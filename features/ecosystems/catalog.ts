@@ -15,6 +15,7 @@ export type GestureSound = {
   frequencyMultiplier: number;
   brightnessMultiplier: number;
   textureLevel: number;
+  audioUrl?: string;
 };
 
 export type SoundVariant = {
@@ -43,12 +44,14 @@ const gesture = (
   frequencyMultiplier: number,
   brightnessMultiplier: number,
   textureLevel: number,
+  audioUrl?: string,
 ): GestureSound => ({
   label,
   description,
   frequencyMultiplier,
   brightnessMultiplier,
   textureLevel,
+  ...(audioUrl ? { audioUrl } : {}),
 });
 
 export const ecosystems: Ecosystem[] = [
@@ -92,24 +95,27 @@ export const ecosystems: Ecosystem[] = [
     gestures: {
       rightArm: gesture(
         "Right arm",
-        "A soft, airy canopy tone.",
+        "Birdsong in a spring forest.",
         1.2,
         1.35,
         0.65,
+        "/audio/forest/mixkit-birds-in-the-spring-forest-1234.wav",
       ),
       leftArm: gesture(
         "Left arm",
-        "A bright, delicate forest texture.",
+        "Heavy rain falling through the forest.",
         1.55,
         1.8,
         0.9,
+        "/audio/forest/mixkit-heavy-rain-drops-2399.wav",
       ),
       bothArms: gesture(
         "Both arms",
-        "A fuller blend of canopy and forest texture.",
+        "Crickets singing on a summer night.",
         0.9,
         1.7,
         1.35,
+        "/audio/forest/mixkit-summer-night-crickets-loop-1789.wav",
       ),
     },
   },

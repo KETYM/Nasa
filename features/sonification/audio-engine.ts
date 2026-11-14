@@ -8,16 +8,29 @@ type ActiveSound = {
   oscillator: OscillatorNode;
   overtone: OscillatorNode;
   filter: BiquadFilterNode;
+  synthGain: GainNode;
   textureGain: GainNode;
   textureSource: AudioBufferSourceNode;
+};
+
+type ActiveSample = {
+  gain: GainNode;
+  source: AudioBufferSourceNode;
 };
 
 export class SonificationEngine {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private activeSound: ActiveSound | null = null;
+  private activeSample: ActiveSample | null = null;
   private variant: SoundVariant | null = null;
   private gestureSound: GestureSound | null = null;
+  private sampleSelected = false;
+  private gestureRequestId = 0;
+  private readonly audioBufferCache = new WeakMap<
+    AudioContext,
+    Map<string, Promise<AudioBuffer>>
+  >();
   private volume = 0.35;
 
   async start(variant: SoundVariant): Promise<void> {
@@ -28,6 +41,7 @@ export class SonificationEngine {
     const oscillator = context.createOscillator();
     const overtone = context.createOscillator();
     const filter = context.createBiquadFilter();
+    const synthGain = context.createGain();
     const textureGain = context.createGain();
     const textureSource = context.createBufferSource();
 
@@ -48,11 +62,12 @@ export class SonificationEngine {
     textureSource.buffer = noiseBuffer;
     textureSource.loop = true;
 
-    oscillator.connect(masterGain);
-    overtone.connect(masterGain);
+    oscillator.connect(synthGain);
+    overtone.connect(synthGain);
     textureSource.connect(filter);
     filter.connect(textureGain);
-    textureGain.connect(masterGain);
+    textureGain.connect(synthGain);
+    synthGain.connect(masterGain);
     masterGain.connect(context.destination);
 
     oscillator.start();
@@ -65,11 +80,13 @@ export class SonificationEngine {
       oscillator,
       overtone,
       filter,
+      synthGain,
       textureGain,
       textureSource,
     };
     this.variant = variant;
     this.gestureSound = null;
+    this.sampleSelected = false;
 
     try {
       await context.resume();
@@ -87,9 +104,73 @@ export class SonificationEngine {
     this.applySound(this.gestureSound);
   }
 
-  setGesture(gesture: MotionGesture | null, sound?: GestureSound): void {
-    this.gestureSound = gesture === null ? null : sound ?? null;
-    this.applySound(this.gestureSound);
+  async setGesture(
+    gesture: MotionGesture | null,
+    sound?: GestureSound,
+  ): Promise<void> {
+    const context = this.context;
+    const masterGain = this.masterGain;
+    if (!context || !masterGain || !this.activeSound) {
+      return;
+    }
+
+    const nextSound = gesture === null ? null : sound ?? null;
+    if (
+      this.sampleSelected &&
+      this.gestureSound?.audioUrl === nextSound?.audioUrl
+    ) {
+      return;
+    }
+
+    this.gestureSound = nextSound;
+    const requestId = ++this.gestureRequestId;
+
+    if (!nextSound?.audioUrl) {
+      this.sampleSelected = false;
+      this.applySound(nextSound);
+      this.fadeOutActiveSample(context);
+      return;
+    }
+
+    try {
+      const buffer = await this.loadAudioBuffer(context, nextSound.audioUrl);
+      if (
+        requestId !== this.gestureRequestId ||
+        this.context !== context ||
+        this.gestureSound?.audioUrl !== nextSound.audioUrl
+      ) {
+        return;
+      }
+
+      this.fadeOutActiveSample(context);
+      this.sampleSelected = true;
+      this.applySound(nextSound);
+
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      source.buffer = buffer;
+      source.loop = true;
+      gain.gain.setValueAtTime(0, context.currentTime);
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start();
+      gain.gain.setTargetAtTime(1, context.currentTime, 0.12);
+      this.activeSample = { gain, source };
+      source.onended = () => {
+        if (this.activeSample?.source === source) {
+          this.activeSample = null;
+        }
+      };
+    } catch (error) {
+      if (requestId !== this.gestureRequestId || this.context !== context) {
+        return;
+      }
+
+      this.fadeOutActiveSample(context);
+      this.sampleSelected = false;
+      this.applySound(this.gestureSound);
+      throw error;
+    }
   }
 
   setVolume(volume: number): void {
@@ -107,12 +188,16 @@ export class SonificationEngine {
     const context = this.context;
     const masterGain = this.masterGain;
     const activeSound = this.activeSound;
+    const activeSample = this.activeSample;
 
     this.context = null;
     this.masterGain = null;
     this.activeSound = null;
+    this.activeSample = null;
     this.variant = null;
     this.gestureSound = null;
+    this.sampleSelected = false;
+    this.gestureRequestId += 1;
 
     if (!context || !masterGain || !activeSound) {
       return;
@@ -123,6 +208,7 @@ export class SonificationEngine {
     activeSound.oscillator.stop(stopAt);
     activeSound.overtone.stop(stopAt);
     activeSound.textureSource.stop(stopAt);
+    activeSample?.source.stop(stopAt);
 
     await new Promise<void>((resolve) => {
       window.setTimeout(resolve, 450);
@@ -145,6 +231,11 @@ export class SonificationEngine {
     const textureLevel = sound?.textureLevel ?? this.variant.textureLevel;
     const baseFrequency = this.variant.baseFrequencyHz * frequencyMultiplier;
 
+    this.activeSound.synthGain.gain.setTargetAtTime(
+      this.sampleSelected ? 0 : 1,
+      now,
+      0.12,
+    );
     this.activeSound.oscillator.frequency.setTargetAtTime(
       baseFrequency,
       now,
@@ -165,5 +256,50 @@ export class SonificationEngine {
       now,
       0.25,
     );
+  }
+
+  private fadeOutActiveSample(context: AudioContext): void {
+    const activeSample = this.activeSample;
+    if (!activeSample) {
+      return;
+    }
+
+    this.activeSample = null;
+    activeSample.gain.gain.cancelScheduledValues(context.currentTime);
+    activeSample.gain.gain.setTargetAtTime(
+      0,
+      context.currentTime,
+      0.08,
+    );
+    activeSample.source.stop(context.currentTime + 0.4);
+  }
+
+  private loadAudioBuffer(
+    context: AudioContext,
+    audioUrl: string,
+  ): Promise<AudioBuffer> {
+    let contextCache = this.audioBufferCache.get(context);
+    if (!contextCache) {
+      contextCache = new Map<string, Promise<AudioBuffer>>();
+      this.audioBufferCache.set(context, contextCache);
+    }
+
+    let bufferPromise = contextCache.get(audioUrl);
+    if (!bufferPromise) {
+      bufferPromise = fetch(audioUrl)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              `Failed to load sound "${audioUrl}" (HTTP ${response.status}).`,
+            );
+          }
+          return response.arrayBuffer();
+        })
+        .then((data) => context.decodeAudioData(data));
+      contextCache.set(audioUrl, bufferPromise);
+      void bufferPromise.catch(() => contextCache.delete(audioUrl));
+    }
+
+    return bufferPromise;
   }
 }

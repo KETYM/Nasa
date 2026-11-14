@@ -21,6 +21,10 @@ function getAudioErrorMessage(error: unknown): string {
     return "This browser does not support Web Audio. Try a current version of Chrome, Firefox or Safari.";
   }
 
+  if (error instanceof Error && error.message.startsWith("Failed to load sound")) {
+    return `A landscape sound could not be loaded: ${error.message}`;
+  }
+
   return "Audio could not start. Check your browser audio settings and try again.";
 }
 
@@ -53,6 +57,9 @@ export function EcosystemExperience({
     () => getVariant(ecosystem, variantId),
     [ecosystem, variantId],
   );
+  const usesGestureRecordings = Object.values(ecosystem.gestures).some(
+    (sound) => sound.audioUrl,
+  );
 
   useEffect(() => {
     if (audioActive) {
@@ -65,7 +72,10 @@ export function EcosystemExperience({
       audioActive && detectedGesture
         ? ecosystem.gestures[detectedGesture]
         : undefined;
-    engine.setGesture(audioActive ? detectedGesture : null, gestureSound);
+    void engine
+      .setGesture(audioActive ? detectedGesture : null, gestureSound)
+      .then(() => setAudioError(null))
+      .catch((error: unknown) => setAudioError(getAudioErrorMessage(error)));
   }, [audioActive, detectedGesture, ecosystem.gestures, engine]);
 
   useEffect(() => {
@@ -366,7 +376,7 @@ export function EcosystemExperience({
             className="rounded-[1.7rem] border border-white/10 bg-[#081e27]/85 p-6 shadow-[0_24px_60px_rgba(3,17,25,0.35)]"
           >
             <p className="text-[0.62rem] font-medium uppercase tracking-[0.3em] text-[#d3b373]">
-              An original sound sketch
+              Landscape soundscape
             </p>
             <h2
               id="sound-heading"
@@ -375,9 +385,9 @@ export function EcosystemExperience({
               Listen to this landscape
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-200/75">
-              A quiet, procedural Web Audio texture changes with the selected
-              ecosystem and variation. It is an artistic synthesis—not a field
-              recording or NASA data.
+              {usesGestureRecordings
+                ? "Recognized gestures play the supplied birds, rain and crickets recordings. These are creative sound assets, not NASA recordings or measurements."
+                : "A quiet, procedural Web Audio texture changes with the selected ecosystem and variation. It is an artistic synthesis, not NASA data."}
             </p>
 
             <div

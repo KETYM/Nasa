@@ -161,15 +161,15 @@ export default function Home() {
               <SectionHeading
                 eyebrow="The experience"
                 title="Move with the planet. Listen to its story."
-                description="Each landscape is an independent room for exploration, where movement can shape an expressive soundscape once the project’s pose model is supplied and verified."
+                description="Each landscape is an independent room for exploration, where local body-movement recognition shapes an expressive soundscape."
               />
 
               <div className="mt-8 space-y-4 text-base leading-8 text-slate-200/75">
                 <p>
-                  Choose a landscape to open its own camera view, select an environmental variation and listen to a procedural audio prototype.
+                  Choose a landscape to open its camera view, select an environmental variation and explore its gesture-controlled soundscape.
                 </p>
                 <p>
-                  The prototype does not contain NASA data, environmental recordings or a motion model yet. Your camera remains local to your browser.
+                  Forest gestures play supplied birds, rain and crickets recordings; the other landscapes use procedural sound. These sounds are creative assets, not NASA data. Camera frames remain in your browser.
                 </p>
               </div>
             </div>

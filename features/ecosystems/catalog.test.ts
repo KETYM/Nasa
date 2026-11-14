@@ -39,6 +39,23 @@ describe("ecosystem catalog", () => {
     );
     expect(() => getVariant(forest, "unknown")).toThrow(RangeError);
   });
+
+  it("maps the three supplied forest recordings to their gestures", () => {
+    const forest = getEcosystem("forest");
+    if (!forest) {
+      throw new Error("Forest ecosystem is missing.");
+    }
+
+    expect(forest.gestures.rightArm.audioUrl).toBe(
+      "/audio/forest/mixkit-birds-in-the-spring-forest-1234.wav",
+    );
+    expect(forest.gestures.leftArm.audioUrl).toBe(
+      "/audio/forest/mixkit-heavy-rain-drops-2399.wav",
+    );
+    expect(forest.gestures.bothArms.audioUrl).toBe(
+      "/audio/forest/mixkit-summer-night-crickets-loop-1789.wav",
+    );
+  });
 });
 
 describe("pose gesture mapping", () => {

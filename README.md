@@ -1,6 +1,6 @@
 # Nasa — Earth Jukebox
 
-A cinematic, interactive web experience for exploring seven Earth ecosystems through locally generated sound.
+A cinematic, interactive web experience for exploring seven Earth ecosystems through local movement recognition and gesture-driven sound.
 
 ## Run locally
 
@@ -35,6 +35,6 @@ The camera is requested only after the user activates it. Preview frames remain 
 
 The Teachable Machine Pose export is stored locally in `public/models/earth-pose/` (`model.json`, `metadata.json`, and `weights.bin`). Its metadata labels are `Brazo derecho`, `brazo izquierdo`, and `Ambos brazos`; class-to-sound mapping uses these exact labels. The model runs in the browser with `@teachablemachine/pose` and TensorFlow.js. PoseNet is pinned to 2.2.0 because 2.2.2 pulls an incompatible TensorFlow core major. Camera frames are not recorded or uploaded. Recognition requires camera permission and a browser with WebGL or CPU TensorFlow.js support.
 
-The sound engine creates a quiet procedural Web Audio sketch from configurable ecosystem, variant, and gesture profiles. Begin listening explicitly to enable audio; once enabled, stable recognized gestures modulate the selected ecosystem sound. These sounds are artistic synthesis, not environmental recordings, NASA measurements or scientific sonification.
+Begin listening explicitly to enable audio. Forest gestures play the supplied birds, rain, and crickets WAV files from `public/audio/forest/`; other landscapes use configurable procedural Web Audio. Forest recordings loop while their gestures are active and fade between gestures. These are creative sound assets, not NASA recordings, measurements, or scientific sonification.
 
 Photography is served by Unsplash and is not presented as NASA imagery. NASA data and visualizations have not yet been integrated.
