@@ -1,38 +1,12 @@
 import { ExperiencePreview } from "@/components/landing/experience-preview";
 import { FeatureCard } from "@/components/landing/feature-card";
 import { SectionHeading } from "@/components/landing/section-heading";
+import { ecosystems } from "@/features/ecosystems/catalog";
 
 const navItems = [
-  { label: "OUR PLANET", href: "#about" },
+  { label: "OUR PLANET", href: "#ecosystems" },
   { label: "THE EXPERIENCE", href: "#experience" },
   { label: "ABOUT", href: "#about" },
-];
-
-const stories = [
-  {
-    title: "OCEANS",
-    description:
-      "Currents, movements and temperatures shaping the pulse of our living planet.",
-    image:
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=80",
-    accent: "border-[#9fd3c1]/40 bg-[#9fd3c1]/10 text-[#d8f4e6]",
-  },
-  {
-    title: "FORESTS",
-    description:
-      "Dense ecosystems, breathing landscapes and the quiet rhythm of terrestrial life.",
-    image:
-      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80",
-    accent: "border-[#d6b778]/40 bg-[#d6b778]/10 text-[#f5e4ba]",
-  },
-  {
-    title: "ATMOSPHERE",
-    description:
-      "Clouds, aerosols and skyward motion that keep home in constant motion.",
-    image:
-      "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=900&q=80",
-    accent: "border-[#7cb9d8]/40 bg-[#7cb9d8]/10 text-[#dff7ff]",
-  },
 ];
 
 export default function Home() {
@@ -91,14 +65,14 @@ export default function Home() {
 
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                   <a
-                    href="#experience"
+                    href="#ecosystems"
                     className="inline-flex items-center justify-center rounded-full bg-[#d8b26d] px-6 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-[#061d28] transition hover:bg-[#e2c889] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f1d9aa] focus-visible:ring-offset-2 focus-visible:ring-offset-[#03161d]"
                   >
                     BEGIN THE EXPERIENCE
                   </a>
 
                   <a
-                    href="#about"
+                    href="#ecosystems"
                     className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-[#f5efe3] transition hover:border-white/35 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d9b36c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#03161d]"
                   >
                     OUR PLANET
@@ -112,7 +86,7 @@ export default function Home() {
                     <span>Planetary signal</span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[0.48rem] text-emerald-200">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                      LIVE
+                      PREVIEW
                     </span>
                   </div>
 
@@ -158,22 +132,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="about" className="border-t border-white/10 bg-[#061c26] py-24 sm:py-28">
+        <section id="ecosystems" className="border-t border-white/10 bg-[#061c26] py-24 sm:py-28">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <SectionHeading
               eyebrow="One planet. Countless stories."
-              title="The living planet, seen with wonder."
-              description="From the oceans to the forests and the atmosphere, Earth is a living archive of movement, climate and memory."
+              title="Choose a landscape to enter."
+              description="Explore seven living landscapes through an experimental, locally generated soundscape. Each ecosystem opens its own camera and listening experience."
             />
 
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {stories.map((story) => (
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {ecosystems.map((ecosystem) => (
                 <FeatureCard
-                  key={story.title}
-                  title={story.title}
-                  description={story.description}
-                  image={story.image}
-                  accent={story.accent}
+                  key={ecosystem.slug}
+                  href={`/experience/${ecosystem.slug}`}
+                  title={ecosystem.name.toUpperCase()}
+                  description={ecosystem.description}
+                  image={ecosystem.image}
+                  accent={ecosystem.accent}
                 />
               ))}
             </div>
@@ -186,15 +161,15 @@ export default function Home() {
               <SectionHeading
                 eyebrow="The experience"
                 title="Move with the planet. Listen to its story."
-                description="A future experience guided by body movement and translated into a living soundtrack inspired by Earth’s rhythms, weather and ecosystems."
+                description="Each landscape is an independent room for exploration, where movement can shape an expressive soundscape once the project’s pose model is supplied and verified."
               />
 
               <div className="mt-8 space-y-4 text-base leading-8 text-slate-200/75">
                 <p>
-                  The experience will invite the user to move naturally, while an expressive system responds to gesture, rhythm and presence.
+                  Choose a landscape to open its own camera view, select an environmental variation and listen to a procedural audio prototype.
                 </p>
                 <p>
-                  This first version only sets the emotional frame—establishing the tone of the project and preparing the way for future science-driven interaction.
+                  The prototype does not contain NASA data, environmental recordings or a motion model yet. Your camera remains local to your browser.
                 </p>
               </div>
             </div>
@@ -218,7 +193,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-white/10 bg-[#04171d] py-8">
+      <footer id="about" className="border-t border-white/10 bg-[#04171d] py-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 text-center text-sm text-slate-300/75 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p className="text-[0.72rem] uppercase tracking-[0.28em] text-[#f0e8d8]">EARTH JUKEBOX</p>
           <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">

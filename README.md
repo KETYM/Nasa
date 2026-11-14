@@ -1,11 +1,11 @@
 # Nasa — Earth Jukebox
 
-A cinematic landing page for Earth Jukebox, a NASA Space Apps Challenge 2026 project exploring how Earth science can inspire sound and movement.
+A cinematic, interactive web experience for exploring seven Earth ecosystems through locally generated sound.
 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -17,6 +17,24 @@ Open [http://localhost:3000](http://localhost:3000).
 - React and TypeScript
 - Tailwind CSS
 
-The current version is a landing page only. Camera access, pose recognition, Teachable Machine, TensorFlow.js, and audio sonification are not implemented yet.
+## Experience routes
 
-Landing-page photography is served by Unsplash; it is not presented as NASA imagery.
+- `/experience/forest`
+- `/experience/ocean`
+- `/experience/atmosphere`
+- `/experience/desert`
+- `/experience/jungle`
+- `/experience/savanna`
+- `/experience/polar`
+
+Each route uses the same reusable experience, camera, ecosystem configuration and audio engine.
+
+## Camera, model and audio
+
+The camera is requested only after the user activates it. Preview frames remain in the browser and are not recorded or uploaded.
+
+The Teachable Machine Pose export is stored locally in `public/models/earth-pose/` (`model.json`, `metadata.json`, and `weights.bin`). Its metadata labels are `Brazo derecho`, `brazo izquierdo`, and `Ambos brazos`; class-to-sound mapping uses these exact labels. The model runs in the browser with `@teachablemachine/pose` and TensorFlow.js. Camera frames are not recorded or uploaded. Recognition requires camera permission and a browser with WebGL or CPU TensorFlow.js support.
+
+The sound engine creates a quiet procedural Web Audio sketch from configurable ecosystem, variant, and gesture profiles. Begin listening explicitly to enable audio; once enabled, stable recognized gestures modulate the selected ecosystem sound. These sounds are artistic synthesis, not environmental recordings, NASA measurements or scientific sonification.
+
+Photography is served by Unsplash and is not presented as NASA imagery. NASA data and visualizations have not yet been integrated.

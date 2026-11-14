@@ -60,6 +60,17 @@ body {
   animation: pulseSoft 8s ease-in-out infinite;
 }
 
+.sound-bar {
+  opacity: 0.3;
+  transform: scaleY(0.45);
+  transform-origin: center;
+}
+
+.sound-bar-active {
+  opacity: 0.85;
+  animation: soundWave 900ms ease-in-out infinite alternate;
+}
+
 @keyframes floatSoft {
   0%,
   100% {
@@ -79,6 +90,15 @@ body {
   50% {
     transform: translate(-50%, -50%) scale(1.06);
     opacity: 1;
+  }
+}
+
+@keyframes soundWave {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
 

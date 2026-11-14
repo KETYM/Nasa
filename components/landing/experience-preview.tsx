@@ -14,21 +14,21 @@ export function ExperiencePreview() {
 
       <div className="absolute bottom-8 left-8 rounded-2xl border border-white/10 bg-[#031b25]/80 px-4 py-3 shadow-lg backdrop-blur-md">
         <div className="mb-2 text-[0.58rem] font-medium uppercase tracking-[0.3em] text-sky-100/70">
-          Signals
+          Concept
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-100">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
-          movement
+          movement, when model is added
         </div>
       </div>
 
       <div className="absolute right-8 top-8 rounded-2xl border border-white/10 bg-[#031b25]/80 px-4 py-3 shadow-lg backdrop-blur-md">
         <div className="mb-2 text-[0.58rem] font-medium uppercase tracking-[0.3em] text-sky-100/70">
-          Planetary flow
+          Sound sketch
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-100">
           <span className="h-2.5 w-2.5 rounded-full bg-[#d6b778] shadow-[0_0_14px_rgba(214,183,120,0.7)]" />
-          sound + motion
+          procedural audio
         </div>
       </div>
     </div>
