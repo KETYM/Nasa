@@ -37,6 +37,12 @@ function disposeModel(model: CustomPoseNet): void {
   model.dispose();
 }
 
+function getInferenceErrorMessage(error: unknown): string {
+  const detail =
+    error instanceof Error ? error.message : "Unknown inference error.";
+  return `Movement recognition stopped: ${detail}`;
+}
+
 export function usePoseRecognition(
   videoRef: RefObject<HTMLVideoElement | null>,
   enabled: boolean,
@@ -157,16 +163,14 @@ export function usePoseRecognition(
         }
 
         schedulePrediction();
-      } catch {
+      } catch (inferenceError) {
         if (!cancelled) {
           if (model) {
             disposeModel(model);
             model = null;
           }
           setStatus("error");
-          setError(
-            "Movement recognition stopped because the pose model could not process a camera frame.",
-          );
+          setError(getInferenceErrorMessage(inferenceError));
         }
       }
     };
