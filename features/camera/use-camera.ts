@@ -52,8 +52,18 @@ export function useCamera() {
   }, [releaseStream]);
 
   const startCamera = useCallback(async () => {
+    if (!window.isSecureContext) {
+      setError(
+        "Camera access is blocked on this connection. Open http://localhost:3000 on this computer, or use HTTPS when connecting from another device.",
+      );
+      setStatus("error");
+      return;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Camera access requires a supported browser and a secure connection.");
+      setError(
+        "Camera access is unavailable in this browser. Use a current browser with camera permission enabled.",
+      );
       setStatus("error");
       return;
     }

@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  allowedDevOrigins: ["172.30.176.1", "127.0.0.1"],
   images: {
     remotePatterns: [
       {
